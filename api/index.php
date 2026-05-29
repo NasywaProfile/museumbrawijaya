@@ -3,6 +3,10 @@
 // Set temporary write paths to /tmp since Vercel's root directory is read-only
 $tmpDir = '/tmp';
 
+// Mark environment as Vercel
+putenv('VERCEL=1');
+$_ENV['VERCEL'] = '1';
+
 // Set environment variables for compilation and caching to use /tmp
 putenv("APP_CONFIG_CACHE={$tmpDir}/config.php");
 putenv("APP_EVENTS_CACHE={$tmpDir}/events.php");
