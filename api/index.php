@@ -34,5 +34,46 @@ if (!getenv('LOG_CHANNEL')) {
     $_ENV['LOG_CHANNEL'] = 'stderr';
 }
 
-// Bootstrap Laravel
-require __DIR__ . '/../public/index.php';
+// ----------------------------------------------------
+// Setup Zero-Config SQLite Database in /tmp on Vercel
+// ----------------------------------------------------
+$dbPath = $tmpDir . '/database.sqlite';
+
+putenv("DB_CONNECTION=sqlite");
+putenv("DB_DATABASE={$dbPath}");
+$_ENV['DB_CONNECTION'] = 'sqlite';
+$_ENV['DB_DATABASE'] = $dbPath;
+
+// If database does not exist, create and initialize it
+if (!file_exists($dbPath)) {
+    // 1. Create SQLite file
+    touch($dbPath);
+    
+    // 2. Load autoloader
+    require_once __DIR__ . '/../vendor/autoload.php';
+    
+    // 3. Boot Laravel console and run migrations
+    $app = require __DIR__ . '/../bootstrap/app.php';
+    $consoleKernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+    
+    // Run migrations
+    $consoleKernel->call('migrate', ['--force' => true]);
+    
+    // Seed default admin and normal user
+    \App\Models\User::create([
+        'name' => 'Admin Museum',
+        'email' => 'admin@gmail.com',
+        'whatsapp' => '081234567890',
+        'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+    ]);
+    
+    \App\Models\User::create([
+        'name' => 'User Biasa',
+        'email' => 'user@gmail.com',
+        'whatsapp' => '081234567891',
+        'password' => \Illuminate\Support\Facades\Hash::make('user123'),
+    ]);
+}
+
+// Bootstrap Laravel and handle the HTTP request normally
+require_once __DIR__ . '/../public/index.php';
